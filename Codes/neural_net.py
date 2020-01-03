@@ -9,15 +9,17 @@ import functools
 import numpy as np
 from utility import alphabetize, abs_mean
 
+
 class ValuedElement(object):
     """
     This is an abstract class that all Network elements inherit from
     """
-    def __init__(self,name,val):
+
+    def __init__(self, name, val):
         self.my_name = name
         self.my_value = val
 
-    def set_value(self,val):
+    def set_value(self, val):
         self.my_value = val
 
     def get_value(self):
@@ -27,13 +29,15 @@ class ValuedElement(object):
         return self.my_name
 
     def __repr__(self):
-        return "%s(%1.2f)" %(self.my_name, self.my_value)
+        return "%s(%1.2f)" % (self.my_name, self.my_value)
+
 
 class DifferentiableElement(object):
     """
     This is an abstract interface class implemented by all Network
     parts that require some differentiable element.
     """
+
     def output(self):
         raise NotImplementedError("This is an abstract method")
 
@@ -44,22 +48,27 @@ class DifferentiableElement(object):
         """clears any precalculated cached value"""
         pass
 
-class Input(ValuedElement,DifferentiableElement):
+
+class Input(ValuedElement, DifferentiableElement):
     """
     Representation of an Input into the network.
     These may represent variable inputs as well as fixed inputs
     (Thresholds) that are always set to -1.
     """
-    def __init__(self,name,val):
-        ValuedElement.__init__(self,name,val)
+
+    def __init__(self, name, val):
+        ValuedElement.__init__(self, name, val)
         DifferentiableElement.__init__(self)
 
     def output(self):
         """
         Returns the output of this Input node.
-        
+
         returns: number (float or int)
         """
+
+        return self.get_value()
+
         raise NotImplementedError("Implement me!")
 
     def dOutdX(self, elem):
@@ -71,17 +80,21 @@ class Input(ValuedElement,DifferentiableElement):
 
         returns: number (float or int)
         """
+        return 0
+
         raise NotImplementedError("Implement me!")
+
 
 class Weight(ValuedElement):
     """
     Representation of an weight into a Neural Unit.
     """
-    def __init__(self,name,val):
-        ValuedElement.__init__(self,name,val)
+
+    def __init__(self, name, val):
+        ValuedElement.__init__(self, name, val)
         self.next_value = None
 
-    def set_next_value(self,val):
+    def set_next_value(self, val):
         self.next_value = val
 
     def update(self):
@@ -92,15 +105,16 @@ class Neuron(DifferentiableElement):
     """
     Representation of a single sigmoid Neural Unit.
     """
+
     def __init__(self, name, inputs, input_weights, use_cache=True):
-        assert len(inputs)==len(input_weights)
+        assert len(inputs) == len(input_weights)
         for i in range(len(inputs)):
-            assert isinstance(inputs[i],(Neuron,Input))
-            assert isinstance(input_weights[i],Weight)
+            assert isinstance(inputs[i], (Neuron, Input))
+            assert isinstance(input_weights[i], Weight)
         DifferentiableElement.__init__(self)
         self.my_name = name
-        self.my_inputs = inputs # list of Neuron or Input instances
-        self.my_weights = input_weights # list of Weight instances
+        self.my_inputs = inputs  # list of Neuron or Input instances
+        self.my_weights = input_weights  # list of Weight instances
         self.use_cache = use_cache
         self.clear_cache()
         self.my_descendant_weights = None
@@ -144,7 +158,7 @@ class Neuron(DifferentiableElement):
             return target.get_name() in weights[weight.get_name()]
         else:
             raise Exception("weight %s is not connect to this node: %s"
-                            %(weight, self))
+                            % (weight, self))
 
     def has_weight(self, weight):
         """
@@ -175,6 +189,16 @@ class Neuron(DifferentiableElement):
 
         returns: number (float or int)
         """
+
+        z = 0
+        inputs = self.get_inputs()
+        weights = self.get_weights()
+        for i in range(len(inputs)):
+            z += inputs[i].output()*weights[i].get_value()
+
+        z = 1 / (1 + math.exp(-z))
+        return z
+
         raise NotImplementedError("Implement me!")
 
     def dOutdX(self, elem):
@@ -195,6 +219,24 @@ class Neuron(DifferentiableElement):
 
         returns: number (float/int)
         """
+
+        out = self.output()
+        out1_out = out*(1-out)
+
+        if self.has_weight(elem):
+            index = self.my_weights.index(elem)
+            oa = self.get_inputs()[index].output()
+            d = out1_out*oa
+        else:
+            d = 0
+            for i in range(len(self.get_weights())):
+                current_weight = self.my_weights[i]
+                if self.isa_descendant_weight_of(elem, current_weight):
+                    input_deriv = self.get_inputs()[i].dOutdX(elem)
+                    d += current_weight.get_value()*input_deriv
+            d *= out1_out
+        return d
+
         raise NotImplementedError("Implement me!")
 
     def get_weights(self):
@@ -207,7 +249,8 @@ class Neuron(DifferentiableElement):
         return self.my_name
 
     def __repr__(self):
-        return "Neuron(%s)" %(self.my_name)
+        return "Neuron(%s)" % (self.my_name)
+
 
 class PerformanceElem(DifferentiableElement):
     """
@@ -218,8 +261,9 @@ class PerformanceElem(DifferentiableElement):
 
     This implementation assumes a single output.
     """
-    def __init__(self,input,desired_value):
-        assert isinstance(input,(Input,Neuron))
+
+    def __init__(self, input, desired_value):
+        assert isinstance(input, (Input, Neuron))
         DifferentiableElement.__init__(self)
         self.my_input = input
         self.my_desired_val = desired_value
@@ -227,9 +271,11 @@ class PerformanceElem(DifferentiableElement):
     def output(self):
         """
         Returns the output of this PerformanceElem node.
-        
+
         returns: number (float/int)
         """
+
+        return -0.5 * (self.my_desired_val - self.my_input.output())**2
         raise NotImplementedError("Implement me!")
 
     def dOutdX(self, elem):
@@ -241,9 +287,10 @@ class PerformanceElem(DifferentiableElement):
 
         returns: number (int/float)
         """
+        return (self.my_desired_val - self.my_input.output())*self.my_input.dOutdX(elem)
         raise NotImplementedError("Implement me!")
 
-    def set_desired(self,new_desired):
+    def set_desired(self, new_desired):
         self.my_desired_val = new_desired
 
     def get_input(self):
@@ -251,8 +298,8 @@ class PerformanceElem(DifferentiableElement):
 
 
 class Network(object):
-    def __init__(self,performance_node,neurons):
-        self.inputs =  []
+    def __init__(self, performance_node, neurons):
+        self.inputs = []
         self.weights = []
         self.performance = performance_node
         self.output = performance_node.get_input()
@@ -261,7 +308,7 @@ class Network(object):
         for neuron in self.neurons:
             self.weights.extend(neuron.get_weights())
             for i in neuron.get_inputs():
-                if isinstance(i,Input) and not ('i0' in i.get_name()) and not i in self.inputs:
+                if isinstance(i, Input) and not ('i0' in i.get_name()) and not i in self.inputs:
                     self.inputs.append(i)
         self.weights.reverse()
         self.weights = []
@@ -269,7 +316,7 @@ class Network(object):
             self.weights += n.get_weight_nodes()
 
     @classmethod
-    def from_layers(self,performance_node,layers):
+    def from_layers(self, performance_node, layers):
         neurons = []
         for layer in layers:
             if layer.get_name() != 'l0':
@@ -280,25 +327,28 @@ class Network(object):
         for n in self.neurons:
             n.clear_cache()
 
+
 def seed_random():
     """Seed the random number generator so that random
     numbers are deterministically 'random'"""
     random.seed(0)
     np.random.seed(0)
 
+
 def random_weight():
     """Generate a deterministic random weight"""
-    # We found that random.randrange(-1,2) to work well emperically 
+    # We found that random.randrange(-1,2) to work well emperically
     # even though it produces randomly 3 integer values -1, 0, and 1.
     return random.randrange(-1, 2)
 
-    # Uncomment the following if you want to try a uniform distribuiton 
+    # Uncomment the following if you want to try a uniform distribuiton
     # of random numbers compare and see what the difference is.
     # return random.uniform(-1, 1)
 
     # When training larger networks, initialization with small, random
     # values centered around 0 is also common, like the line below:
     # return np.random.normal(0,0.1)
+
 
 def make_neural_net_basic():
     """
@@ -325,22 +375,23 @@ def make_neural_net_basic():
     All names should be unique.
     You must follow these conventions in order to pass all the tests.
     """
-    i0 = Input('i0', -1.0) # this input is immutable
+    i0 = Input('i0', -1.0)  # this input is immutable
     i1 = Input('i1', 0.0)
     i2 = Input('i2', 0.0)
 
     w1A = Weight('w1A', 1)
     w2A = Weight('w2A', 1)
-    wA  = Weight('wA', 1)
+    wA = Weight('wA', 1)
 
     # Inputs must be in the same order as their associated weights
-    A = Neuron('A', [i1,i2,i0], [w1A,w2A,wA])
+    A = Neuron('A', [i1, i2, i0], [w1A, w2A, wA])
     P = PerformanceElem(A, 0.0)
 
     # Package all the components into a network
     # First list the PerformanceElem P, Then list all neurons afterwards
-    net = Network(P,[A])
+    net = Network(P, [A])
     return net
+
 
 def make_neural_net_two_layer():
     """
@@ -364,7 +415,7 @@ def make_neural_net_challenging():
     weights, and neurons.
     """
     raise NotImplementedError("Implement me!")
-   
+
 
 def make_neural_net_two_moons():
     """
@@ -380,7 +431,7 @@ def make_neural_net_two_moons():
 
 
 def train(network,
-          data,      # training data
+          data,  # training data
           rate=1.0,  # learning rate
           target_abs_mean_performance=0.0001,
           max_iterations=10000,
@@ -425,22 +476,22 @@ def train(network,
 
         if abs_mean_performance < target_abs_mean_performance:
             if verbose:
-                print("iter %d: training complete.\n"\
-                      "mean-abs-performance threshold %s reached (%1.6f)"\
-                      %(iteration,
-                        target_abs_mean_performance,
-                        abs_mean_performance))
+                print("iter %d: training complete.\n"
+                      "mean-abs-performance threshold %s reached (%1.6f)"
+                      % (iteration,
+                         target_abs_mean_performance,
+                         abs_mean_performance))
             break
 
         iteration += 1
 
         if iteration % 10 == 0 and verbose:
-            print("iter %d: mean-abs-performance = %1.6f"\
-                  %(iteration,
-                    abs_mean_performance))
+            print("iter %d: mean-abs-performance = %1.6f"
+                  % (iteration,
+                     abs_mean_performance))
 
-    print('weights:', network.weights)
-    plot_decision_boundary(network, data)
+    # print('weights:', network.weights)
+    # plot_decision_boundary(network, data)
 
 
 def test(network, data, verbose=False):
@@ -460,21 +511,17 @@ def test(network, data, verbose=False):
         network.clear_cache()
 
         if prediction == datum[-1]:
-            correct+=1
+            correct += 1
             if verbose:
-                print("test(%s) returned: %s => %s [%s]" %(str(datum),
-                                                           str(result),
-                                                           datum[-1],
-                                                           "correct"))
+                print("test(%s) returned: %s => %s [%s]" % (str(datum),
+                                                            str(result),
+                                                            datum[-1],
+                                                            "correct"))
         else:
             if verbose:
-                print("test(%s) returned: %s => %s [%s]" %(str(datum),
-                                                           str(result),
-                                                           datum[-1],
-                                                           "wrong"))
+                print("test(%s) returned: %s => %s [%s]" % (str(datum),
+                                                            str(result),
+                                                            datum[-1],
+                                                            "wrong"))
 
-    return float(correct)/len(data)
-
-
-
-
+    return float(correct) / len(data)
