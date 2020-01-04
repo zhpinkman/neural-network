@@ -6,7 +6,8 @@ from neural_net import train, test,\
     make_neural_net_basic,\
     make_neural_net_two_layer,\
     make_neural_net_challenging,\
-    make_neural_net_two_moons
+    make_neural_net_two_moons, \
+    finite_difference
 
 from neural_net_data import simple_data_sets,\
     harder_data_sets,\
@@ -29,6 +30,7 @@ def main(neural_net_func, data_sets, rate=1.0, max_iterations=10000):
         print("Testing on %s test-data" % (name))
         result = test(nn, test_data, verbose=verbose)
         print("Accuracy: %f" % (result))
+        finite_difference(nn)
 
 
 if __name__ == "__main__":

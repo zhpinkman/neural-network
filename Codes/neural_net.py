@@ -402,6 +402,9 @@ def make_neural_net_two_layer():
     See 'make_neural_net_basic' for required naming convention for inputs,
     weights, and neurons.
     """
+
+    # i0 = Input('i0'z)
+
     raise NotImplementedError("Implement me!")
 
 
@@ -428,6 +431,40 @@ def make_neural_net_two_moons():
     weights, and neurons.
     """
     raise NotImplementedError("Implement me!")
+
+
+def finite_difference(net):
+
+    eps = 1e-8
+
+    for w in net.weights:
+        net.clear_cache()
+
+        performanceByDerivative = net.performance.dOutdX(w)
+        net.clear_cache()
+
+        w.set_next_value(w.get_value() + eps)
+        # w.update()
+
+        performanceByFiniteDifference = net.performance.output()
+        net.clear_cache()
+
+        w.set_next_value(w.get_value() - eps)
+        net.clear_cache()
+
+        actualPerformance = net.performance.output()
+        net.clear_cache()
+        # w.update()
+
+        calculatedPerformance = (
+            performanceByFiniteDifference - actualPerformance) / eps
+
+        if abs(performanceByDerivative - calculatedPerformance) < 1e-4:
+            print("not similar")
+            return False
+
+    print("fifth part compeleted")
+    return True
 
 
 def train(network,
@@ -492,6 +529,7 @@ def train(network,
 
     # print('weights:', network.weights)
     # plot_decision_boundary(network, data)
+    finite_difference(network)
 
 
 def test(network, data, verbose=False):
