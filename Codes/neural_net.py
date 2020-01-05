@@ -8,6 +8,7 @@ import random
 import functools
 import numpy as np
 from utility import alphabetize, abs_mean
+import matplotlib.pyplot as plt
 
 
 class ValuedElement(object):
@@ -494,6 +495,33 @@ def finite_difference(net):
     return True
 
 
+def plot_decision_boundary(net, xmin, xmax, ymin, ymax):
+    # def plot_decision_boundary():
+
+    x = np.random.uniform(low=xmin, high=xmax, size=(2000,))
+    y = np.random.uniform(low=ymin, high=ymax, size=(2000,))
+    x_filtered = []
+    y_filtered = []
+    for i, j in zip(x, y):
+        net.inputs[0].set_value(i)
+        net.inputs[1].set_value(j)
+        net.clear_cache()
+        result = net.output.output()
+        # print("result, ", result)
+        prediction = round(result)
+        net.clear_cache()
+
+        if prediction < 0.5:
+            x_filtered.append(i)
+            y_filtered.append(j)
+
+    # print(x_filtered)
+    # print(y_filtered)
+
+    # plt.scatter(x_filtered, y_filtered)
+    # plt.show()
+
+
 def train(network,
           data,  # training data
           rate=1.0,  # learning rate
@@ -555,15 +583,14 @@ def train(network,
                      abs_mean_performance))
 
     # print('weights:', network.weights)
-    # plot_decision_boundary(network, data)
-    finite_difference(network)
+    plot_decision_boundary(network, 0, 2, 0, 2)
+    # finite_difference(network)
 
 
 def test(network, data, verbose=False):
     """Test the neural net on some given data."""
     correct = 0
     for datum in data:
-
         for i in range(len(network.inputs)):
             network.inputs[i].set_value(datum[i])
 
