@@ -403,7 +403,34 @@ def make_neural_net_two_layer():
     weights, and neurons.
     """
 
-    # i0 = Input('i0'z)
+    i0 = Input('i0', -1.0)
+    i1 = Input('i1', 0.0)
+    i2 = Input('i2', 0.0)
+
+    seed_random()
+
+    w1A = Weight('w1A', random_weight())
+    w1B = Weight('w1B', random_weight())
+
+    w2A = Weight('w2A', random_weight())
+    w2B = Weight('w2B', random_weight())
+
+    wAC = Weight('wAC', random_weight())
+    wBC = Weight('wBC', random_weight())
+
+    wA = Weight('wA', random_weight())
+    wB = Weight('wB', random_weight())
+    wC = Weight('wC', random_weight())
+
+    A = Neuron('A', [i1, i2, i0], [w1A, w1B, wA])
+    B = Neuron('B', [i1, i2, i0], [w1A, w1B, wB])
+
+    C = Neuron('C', [A, B, i0], [wAC, wBC, wC])
+
+    P = PerformanceElem(C, 0.0)
+
+    net = Network(P, [A, B, C])
+    return net
 
     raise NotImplementedError("Implement me!")
 

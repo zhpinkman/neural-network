@@ -30,7 +30,7 @@ def main(neural_net_func, data_sets, rate=1.0, max_iterations=10000):
         print("Testing on %s test-data" % (name))
         result = test(nn, test_data, verbose=verbose)
         print("Accuracy: %f" % (result))
-        finite_difference(nn)
+        # finite_difference(nn) # this part is for testing the validity of the derivative function we used previously in project
 
 
 if __name__ == "__main__":
