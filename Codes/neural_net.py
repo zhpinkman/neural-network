@@ -423,8 +423,8 @@ def make_neural_net_two_layer():
     wB = Weight('wB', random_weight())
     wC = Weight('wC', random_weight())
 
-    A = Neuron('A', [i1, i2, i0], [w1A, w1B, wA])
-    B = Neuron('B', [i1, i2, i0], [w1A, w1B, wB])
+    A = Neuron('A', [i1, i2, i0], [w1A, w2A, wA])
+    B = Neuron('B', [i1, i2, i0], [w1B, w2B, wB])
 
     C = Neuron('C', [A, B, i0], [wAC, wBC, wC])
 
@@ -498,8 +498,8 @@ def finite_difference(net):
 def plot_decision_boundary(net, xmin, xmax, ymin, ymax):
     # def plot_decision_boundary():
 
-    x = np.random.uniform(low=xmin, high=xmax, size=(2000,))
-    y = np.random.uniform(low=ymin, high=ymax, size=(2000,))
+    x = np.linspace(start=xmin, stop=xmax, num=2000)
+    y = np.linspace(start=ymin, stop=ymax, num=2000)
     x_filtered = []
     y_filtered = []
     for i, j in zip(x, y):
@@ -515,8 +515,8 @@ def plot_decision_boundary(net, xmin, xmax, ymin, ymax):
             x_filtered.append(i)
             y_filtered.append(j)
 
-    # print(x_filtered)
-    # print(y_filtered)
+    print(x_filtered)
+    print(y_filtered)
 
     # plt.scatter(x_filtered, y_filtered)
     # plt.show()
@@ -583,7 +583,7 @@ def train(network,
                      abs_mean_performance))
 
     # print('weights:', network.weights)
-    plot_decision_boundary(network, 0, 2, 0, 2)
+    plot_decision_boundary(network, 0, 10, 0, 10)
     # finite_difference(network)
 
 
